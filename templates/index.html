@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>古籍语音问答助手</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "KaiTi", "楷体", "SimSun", "宋体", serif;
+            background: linear-gradient(135deg, #f5e6d3 0%, #d4a574 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            background: #fffef8;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(139, 69, 19, 0.3);
+            border: 2px solid #8b4513;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px double #8b4513;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 36px;
+            color: #8b4513;
+            margin-bottom: 10px;
+            letter-spacing: 5px;
+        }
+
+        .subtitle {
+            color: #a0522d;
+            font-size: 16px;
+            letter-spacing: 2px;
+        }
+
+        .scholar-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .scholar-image {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            transition: all 0.3s ease;
+        }
+
+        .scholar-image.listening {
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+            transform: scale(1.05);
+        }
+
+        .scholar-image.thinking {
+            animation: thinking 1.5s infinite;
+        }
+
+        .scholar-image.speaking {
+            animation: speaking 0.5s infinite;
+        }
+
+        @keyframes thinking {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+
+        @keyframes speaking {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .status-text {
+            margin-top: 15px;
+            font-size: 18px;
+            color: #8b4513;
+            min-height: 30px;
+        }
+
+        .chat-container {
+            background: #faf8f3;
+            border: 1px solid #d4a574;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 10px;
+            line-height: 1.8;
+        }
+
+        .question {
+            background: #e8dcc8;
+            border-left: 4px solid #8b4513;
+            margin-right: 50px;
+        }
+
+        .answer {
+            background: #fff9e6;
+            border-left: 4px solid #cd853f;
+            margin-left: 50px;
+        }
+
+        .message-label {
+            font-weight: bold;
+            color: #8b4513;
+            margin-bottom: 8px;
+        }
+
+        .input-container {
+            margin: 20px 0;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #d4a574;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+            background: #fffef8;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #8b4513;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px;
+            background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 2px;
+        }
+
+        button:hover:not(:disabled) {
+            background: linear-gradient(135deg, #a0522d 0%, #8b4513 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(139, 69, 19, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .voice-btn {
+            background: linear-gradient(135deg, #dc143c 0%, #8b0000 100%);
+            position: relative;
+        }
+
+        .voice-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #ff1744 0%, #dc143c 100%);
+        }
+
+        .voice-btn.recording {
+            animation: recording-pulse 1s infinite;
+        }
+
+        @keyframes recording-pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(220, 20, 60, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 20px 10px rgba(220, 20, 60, 0);
+            }
+        }
+
+        .audio-player {
+            margin: 15px 0;
+            display: none;
+        }
+
+        .audio-player audio {
+            width: 100%;
+        }
+
+        .examples {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f5f0e8;
+            border-radius: 10px;
+            border: 1px solid #d4a574;
+        }
+
+        .examples h3 {
+            color: #8b4513;
+            margin-bottom: 15px;
+            font-size: 20px;
+            letter-spacing: 2px;
+        }
+
+        .example-item {
+            padding: 10px 15px;
+            margin: 8px 0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .example-item:hover {
+            background: #fff9e6;
+            border-left-color: #8b4513;
+            transform: translateX(5px);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #8b4513;
+            font-size: 18px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>古籍语音问答助手</h1>
+            <div class="subtitle">基于人工智能的古籍知识问答系统</div>
+        </div>
+
+        <!-- 虚拟学者 -->
+        <div class="scholar-container">
+            <img src="/static/images/scholar.svg" alt="古代学者" class="scholar-image" id="scholarImg">
+            <div class="status-text" id="statusText">我是您的古籍助手，请向我提问</div>
+        </div>
+
+        <!-- 对话记录 -->
+        <div class="chat-container" id="chatContainer">
+            <div style="text-align: center; color: #999; padding: 50px 0;">
+                对话记录将显示在这里
+            </div>
+        </div>
+
+        <!-- 音频播放器 -->
+        <div class="audio-player" id="audioPlayer">
+            <audio id="audio" controls></audio>
+        </div>
+
+        <!-- 输入区域 -->
+        <div class="input-container">
+            <!-- 语音选择器 -->
+            <div style="margin-bottom: 15px;">
+                <label for="voiceSelect" style="font-weight: bold; color: #8b4513; margin-right: 10px;">🎙️ 语音选择：</label>
+                <select id="voiceSelect" style="padding: 8px 15px; border: 2px solid #d4a574; border-radius: 8px; font-size: 16px; background: #fffef8; cursor: pointer;">
+                    <option value="mandarin_female">普通话-女声</option>
+                    <option value="mandarin_male">普通话-男声</option>
+                    <option value="cantonese_female">粤语-女声（优雅）</option>
+                    <option value="cantonese_female2">粤语-女声（知性）</option>
+                    <option value="cantonese_male">粤语-男声（欢脱）</option>
+                </select>
+            </div>
+
+            <textarea id="questionInput" placeholder="请输入您的问题，例如：学而时习之是什么意思？"></textarea>
+            <div class="button-group">
+                <button id="voiceBtn" class="voice-btn" onclick="toggleRecording()">🎤 语音提问</button>
+                <button id="askBtn" onclick="askQuestion()">📝 文字提问</button>
+                <button id="clearBtn" onclick="clearChat()">清空对话</button>
+            </div>
+            <div class="button-group" style="margin-top: 10px;">
+                <button onclick="testPlayAudio()" style="background: linear-gradient(135deg, #228b22 0%, #006400 100%);">🔊 测试播放音频</button>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">学者正在思考</div>
+
+        <!-- 示例问题 -->
+        <div class="examples">
+            <h3>📚 示例问题</h3>
+            <div class="example-item" onclick="setQuestion('学而时习之是什么意思')">
+                学而时习之是什么意思？
+            </div>
+            <div class="example-item" onclick="setQuestion('孔子的弟子有谁')">
+                孔子的弟子有谁？
+            </div>
+            <div class="example-item" onclick="setQuestion('什么是仁')">
+                什么是仁？
+            </div>
+            <div class="example-item" onclick="setQuestion('诗经中有哪些著名篇目')">
+                诗经中有哪些著名篇目？
+            </div>
+            <div class="example-item" onclick="setQuestion('红楼梦第五回讲什么')">
+                红楼梦第五回讲什么？（测试拒答）
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const scholarImg = document.getElementById('scholarImg');
+        const statusText = document.getElementById('statusText');
+        const chatContainer = document.getElementById('chatContainer');
+        const questionInput = document.getElementById('questionInput');
+        const askBtn = document.getElementById('askBtn');
+        const voiceBtn = document.getElementById('voiceBtn');
+        const loading = document.getElementById('loading');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const audio = document.getElementById('audio');
+
+        let messageCount = 0;
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+
+        function setQuestion(text) {
+            questionInput.value = text;
+            questionInput.focus();
+        }
+
+        function clearChat() {
+            chatContainer.innerHTML = '<div style="text-align: center; color: #999; padding: 50px 0;">对话记录将显示在这里</div>';
+            audioPlayer.style.display = 'none';
+            statusText.textContent = '我是您的古籍助手，请向我提问';
+            scholarImg.className = 'scholar-image';
+            messageCount = 0;
+        }
+
+        // 录音功能
+        // 将音频转换为 16kHz 单声道 WAV
+        async function convertToWav16k(blob) {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)({
+                sampleRate: 16000
+            });
+
+            // 读取音频数据
+            const arrayBuffer = await blob.arrayBuffer();
+            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+            // 重采样到 16kHz 单声道
+            const offlineContext = new OfflineAudioContext(1, audioBuffer.duration * 16000, 16000);
+            const source = offlineContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(offlineContext.destination);
+            source.start(0);
+
+            const renderedBuffer = await offlineContext.startRendering();
+
+            // 获取 PCM 数据
+            const pcmData = renderedBuffer.getChannelData(0);
+
+            // 编码为 WAV
+            const wavBlob = encodeWAV(pcmData, 16000);
+            return wavBlob;
+        }
+
+        // 编码 WAV 文件
+        function encodeWAV(samples, sampleRate) {
+            const buffer = new ArrayBuffer(44 + samples.length * 2);
+            const view = new DataView(buffer);
+
+            // WAV 文件头
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + samples.length * 2, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);  // fmt chunk size
+            view.setUint16(20, 1, true);   // PCM format
+            view.setUint16(22, 1, true);   // mono
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);  // byte rate
+            view.setUint16(32, 2, true);   // block align
+            view.setUint16(34, 16, true);  // bits per sample
+            writeString(view, 36, 'data');
+            view.setUint32(40, samples.length * 2, true);
+
+            // PCM 数据
+            let offset = 44;
+            for (let i = 0; i < samples.length; i++) {
+                const s = Math.max(-1, Math.min(1, samples[i]));
+                view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+                offset += 2;
+            }
+
+            return new Blob([view], { type: 'audio/wav' });
+        }
+
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+
+        async function toggleRecording() {
+            if (!isRecording) {
+                await startRecording();
+            } else {
+                stopRecording();
+            }
+        }
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        channelCount: 1,  // 单声道
+                        sampleRate: 16000  // 16kHz 采样率
+                    }
+                });
+
+                // 检查支持的 MIME 类型
+                let options = { mimeType: 'audio/webm' };
+                if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                    options = { mimeType: 'audio/webm;codecs=opus' };
+                }
+
+                mediaRecorder = new MediaRecorder(stream, options);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const rawBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+                    console.log('原始录音格式:', mediaRecorder.mimeType, '大小:', rawBlob.size);
+
+                    let audioBlob;
+                    try {
+                        audioBlob = await convertToWav16k(rawBlob);
+                        console.log('已转换为 WAV, 大小:', audioBlob.size);
+                    } catch (e) {
+                        console.error('WAV 转换失败:', e);
+                        alert('录音转换失败：' + e.message);
+                        voiceBtn.disabled = false;
+                        stream.getTracks().forEach(track => track.stop());
+                        return;
+                    }
+
+                    await sendVoiceQuestion(audioBlob);
+
+                    // 停止所有音轨
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+
+                // 更新UI
+                voiceBtn.textContent = '⏹️ 停止录音';
+                voiceBtn.classList.add('recording');
+                scholarImg.className = 'scholar-image listening';
+                statusText.textContent = '正在倾听您的问题...';
+                askBtn.disabled = true;
+
+            } catch (error) {
+                alert('无法访问麦克风，请检查浏览器权限设置');
+                console.error('录音错误:', error);
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+
+                // 更新UI
+                voiceBtn.textContent = '🎤 语音提问';
+                voiceBtn.classList.remove('recording');
+                voiceBtn.disabled = true;
+            }
+        }
+
+        async function sendVoiceQuestion(audioBlob) {
+            // 更新状态
+            scholarImg.className = 'scholar-image thinking';
+            statusText.textContent = '正在识别您的问题...';
+            loading.classList.add('show');
+
+            try {
+                // 获取选择的语音类型
+                const voiceType = document.getElementById('voiceSelect').value;
+
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'recording.wav');
+                formData.append('voice_type', voiceType);  // 添加语音类型
+
+                console.log('发送语音请求，语音类型:', voiceType);
+
+                const response = await fetch('/voice_ask', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                console.log('收到响应:', data);
+
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                // 显示识别的问题
+                console.log('识别文字:', data.recognized_text);
+                addMessage('question', data.recognized_text);
+
+                // 短暂延迟，模拟思考
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // 显示答案
+                console.log('显示答案');
+                addMessage('answer', data.answer);
+
+                // 播放音频
+                if (data.audio_file) {
+                    console.log('准备播放音频:', data.audio_file);
+                    scholarImg.className = 'scholar-image speaking';
+                    statusText.textContent = '学者正在回答...';
+
+                    const audioUrl = '/audio/' + data.audio_file + '?' + Date.now();
+                    console.log('音频URL:', audioUrl);
+
+                    audio.src = audioUrl;
+                    audioPlayer.style.display = 'block';
+                    audio.load();
+
+                    audio.oncanplay = function() {
+                        console.log('音频可以播放了，开始播放');
+                        audio.play().then(() => {
+                            console.log('播放成功');
+                        }).catch(e => {
+                            console.error('播放失败:', e);
+                            alert('音频播放失败，请手动点击播放按钮');
+                        });
+                    };
+
+                    audio.onerror = function() {
+                        console.error('音频加载错误');
+                        alert('音频加载失败');
+                    };
+
+                    audio.onended = function() {
+                        console.log('音频播放完毕');
+                        scholarImg.className = 'scholar-image';
+                        statusText.textContent = '我是您的古籍助手，请继续提问';
+                    };
+                } else {
+                    console.log('没有音频文件');
+                    scholarImg.className = 'scholar-image';
+                    statusText.textContent = '我是您的古籍助手，请继续提问';
+                }
+
+            } catch (e) {
+                console.error('语音识别错误:', e);
+                alert('语音识别失败：' + e.message);
+                scholarImg.className = 'scholar-image';
+                statusText.textContent = '出现错误，请重试';
+            } finally {
+                voiceBtn.disabled = false;
+                askBtn.disabled = false;
+                loading.classList.remove('show');
+            }
+        }
+
+        async function askQuestion() {
+            const question = questionInput.value.trim();
+
+            if (!question) {
+                alert('请输入问题');
+                return;
+            }
+
+            // 清空输入框
+            questionInput.value = '';
+
+            // 显示用户问题
+            addMessage('question', question);
+
+            // 更新状态
+            scholarImg.className = 'scholar-image thinking';
+            statusText.textContent = '学者正在思考...';
+            askBtn.disabled = true;
+            voiceBtn.disabled = true;
+            loading.classList.add('show');
+            audioPlayer.style.display = 'none';
+
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({question: question})
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                // 显示答案
+                addMessage('answer', data.answer);
+
+                // 播放音频
+                if (data.audio_file) {
+                    scholarImg.className = 'scholar-image speaking';
+                    statusText.textContent = '学者正在回答...';
+
+                    audio.src = '/audio/' + data.audio_file + '?' + Date.now();
+                    audioPlayer.style.display = 'block';
+                    audio.load();
+
+                    audio.oncanplay = function() {
+                        audio.play().catch(e => {
+                            console.log('自动播放被阻止，请手动点击播放');
+                        });
+                    };
+
+                    audio.onended = function() {
+                        scholarImg.className = 'scholar-image';
+                        statusText.textContent = '我是您的古籍助手，请继续提问';
+                    };
+                } else {
+                    scholarImg.className = 'scholar-image';
+                    statusText.textContent = '我是您的古籍助手，请继续提问';
+                }
+
+            } catch (e) {
+                alert('请求失败：' + e.message);
+                scholarImg.className = 'scholar-image';
+                statusText.textContent = '出现错误，请重试';
+            } finally {
+                askBtn.disabled = false;
+                voiceBtn.disabled = false;
+                loading.classList.remove('show');
+            }
+        }
+
+        function addMessage(type, text) {
+            if (messageCount === 0) {
+                chatContainer.innerHTML = '';
+            }
+            messageCount++;
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + type;
+
+            const label = type === 'question' ? '您的问题' : '学者回答';
+            messageDiv.innerHTML = `
+                <div class="message-label">${label}：</div>
+                <div>${text}</div>
+            `;
+
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // 回车提交
+        questionInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                askQuestion();
+            }
+        });
+
+        // 测试播放音频
+        function testPlayAudio() {
+            console.log('测试播放音频');
+            const audioUrl = '/audio/test_beep.wav?' + Date.now();
+            console.log('音频URL:', audioUrl);
+
+            audio.src = audioUrl;
+            audioPlayer.style.display = 'block';
+
+            audio.load();
+
+            audio.onloadeddata = function() {
+                console.log('音频数据加载完成');
+                audio.play().then(() => {
+                    console.log('播放成功');
+                    scholarImg.className = 'scholar-image speaking';
+                    statusText.textContent = '正在播放测试音频...';
+                }).catch(e => {
+                    console.error('播放失败:', e);
+                    alert('播放失败: ' + e.message);
+                });
+            };
+
+            audio.onerror = function(e) {
+                console.error('音频加载错误:', e);
+                console.error('错误代码:', audio.error ? audio.error.code : 'unknown');
+                alert('音频加载失败');
+            };
+
+            audio.onended = function() {
+                console.log('播放结束');
+                scholarImg.className = 'scholar-image';
+                statusText.textContent = '测试完成';
+            };
+        }
+    </script>
+</body>
+</html>
