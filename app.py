@@ -46,9 +46,19 @@ VOICE_OPTIONS = {
         'voice': 'longyuan',
         'model': 'cosyvoice-v1'
     },
-    'cantonese': {
-        'name': '粤语',
+    'cantonese_female': {
+        'name': '粤语-女声（优雅）',
         'voice': 'longwan',
+        'model': 'cosyvoice-v1'
+    },
+    'cantonese_female2': {
+        'name': '粤语-女声（知性）',
+        'voice': 'longwan',
+        'model': 'cosyvoice-v1'
+    },
+    'cantonese_male': {
+        'name': '粤语-男声（欢脱）',
+        'voice': 'longcheng',
         'model': 'cosyvoice-v1'
     },
     'taiwanese': {
